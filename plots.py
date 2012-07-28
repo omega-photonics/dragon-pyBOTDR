@@ -38,10 +38,8 @@ class Plot(Qwt.QwtPlot):
         
     def myplot(self, data, n=0):
         if type(data) is np.ndarray and data.ndim == 2:
-            print "Plotting, shape:", data.shape
             _x = np.arange(data.shape[1])
             for i in range(data.shape[0]):
-                print "plotting", data[i][1000:1010]
                 self.curves[n + i].setData(_x, data[i]) # -1 is ugly HACK
         else:
             if type(data) is Curve:

@@ -13,6 +13,7 @@ class TimeScanner(QtCore.QObject):
     boundaryReached = QtCore.pyqtSignal(tuple)
     measured = QtCore.pyqtSignal(int)
     dtChanged = QtCore.pyqtSignal(float)
+    bottomChanged = QtCore.pyqtSignal(int)
     UP, DOWN = 0, 1
     def __init__(self, n=100, parent=None):
         QtCore.QObject.__init__(self, parent)
@@ -41,6 +42,7 @@ class TimeScanner(QtCore.QObject):
         self.range = np.array(np.linspace(self.bot, self.top, self.ndot), dtype=int)
         self.temperatureList = np.append(self.range, self.range[::-1])
         self.dtChanged.emit(float(self.range[1]-self.range[0]))
+        self.bottomChanged.emit(self.range[0])
         # for each scan we have 2 directions,
         # for each dirrection we have 2 polarization states
         self.statesNumber = self.nscans * self.ndot * 2 * 2 

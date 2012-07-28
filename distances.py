@@ -228,8 +228,6 @@ class Approximator(QtCore.QThread):
         res = self.pool.map(aprlorentz, TASKS, chunksize=len(TASKS) // 3 + 1)
         param, stat = zip(*res)
 
-        print "ret:", param
-        print "stat:", stat
 #        print "Approximated {} dots".format(res.shape)
 #        print "Res for {} dots: {}".format(res[0,:0].shape, res[0,:0])
 #        
@@ -242,6 +240,23 @@ class Approximator(QtCore.QThread):
         
         self.lastres = res
       
+class Maximizer(QtCore.QThread):
+    measured = QtCore.pyqtSignal(np.ndarray)
+    def __init__(self, parent=None):
+        QtCore.QThread.__init__(self, parent)
+    
+    def process_submatrix(self, index):
+        scan = dataFromShared()[index]
+        pos = self.bottom + self.dt * scan.argmax(axis=-1)
+        self.measured.emit(pos)
+
+    def set_dt(self, dt):
+        self.dt = dt
+
+    def set_bottom(self, bot):
+        self.bottom = bot
+
+
 if __name__ == "__main__":
     import pylab as plt
     import time

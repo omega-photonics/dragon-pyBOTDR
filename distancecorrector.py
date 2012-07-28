@@ -8,8 +8,9 @@ class DistanceCorrector(QtCore.QObject):
         self.dist = []
         self.maxlen = 100
         self.enabled = False
-        self.saferange = (25000, 40000)
+        self.saferange = (0, 65535)
         self.channel = 0
+        self.polarity = 0
         
     def setEnabled(self, state):
         self.enabled = state
@@ -17,6 +18,9 @@ class DistanceCorrector(QtCore.QObject):
     def setChannel(self, channel):
         self.channel = channel
     
+    def setPolarity(self, polarity):
+        self.polarity = polarity
+
     def setA(self, A):
         print "New A is ", A
         self.A = A
@@ -27,7 +31,7 @@ class DistanceCorrector(QtCore.QObject):
     def appendDistances(self, dist):
         print "Dist shape is ", dist.shape
         print "Channel is ", self.channel
-        self.dist.append(dist[self.channel])
+        self.dist.append(dist[self.polarity, self.channel])
         if len(self.dist) > self.maxlen:
             self.dist.pop(0)
         self.react()

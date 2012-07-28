@@ -9,7 +9,7 @@ import time
 import scanner
 from datetime import datetime
 import dump
-from distances import Correlator, Approximator, MemoryUpdater
+from distances import Correlator, Approximator, Maximizer, MemoryUpdater
 from averager import Averager
 from distancecorrector import DistanceCorrector
 
@@ -62,6 +62,7 @@ class MainWindow(Base, Form):
         self.memoryupdater = MemoryUpdater(self)
         self.correlator = Correlator(self)
         self.approximator = Approximator(self)
+        self.maximizer = Maximizer(self)
         
         self.corraverager = Averager(self)
 #        self.correlator.measured.connect(self.corraverager.appendDistances)
@@ -102,7 +103,7 @@ class MainWindow(Base, Form):
         self.corrector.setChannel(self.correctorWidget.channel.value())
         self.corrector.setReaction(self.usbWidget.spinBox_6.value())
         
-        self.approximator.measured.connect(self.corrector.appendDistances)        
+        self.maximizer.measured.connect(self.corrector.appendDistances)        
         self.corrector.correct.connect(self.usbWidget.spinBox_6.setValue)
         self.usbWidget.spinBox_6.valueChanged.connect(self.corrector.setReaction)
         
@@ -174,7 +175,10 @@ class MainWindow(Base, Form):
         self.change_scan_time()
         self.usbWorker.setDIL_T_scan_top(self.DILTScannerWidget.top.value())
         self.usbWorker.setDIL_T_scan_bottom(self.DILTScannerWidget.bottom.value())
-        
+        self.scanner.dtChanged.connect(self.maximizer.set_dt)
+        self.scanner.bottomChanged.connect(self.maximizer.set_bottom)
+        self.scanner.updaterange()
+
         self.showMaximized()
         self.plotsOnly = False
         self.plotsFreezed = False
@@ -289,6 +293,8 @@ class MainWindow(Base, Form):
                     self.approximator.process_submatrix)
                 self.scanner.boundaryReached.disconnect(
                     self.correlator.process_submatrix)
+                self.scanner.boundaryReached.disconnect(
+                    self.maximizer.process_submatrix)
 
     def start_DILT_scan(self, val):
         if val:
@@ -314,6 +320,8 @@ class MainWindow(Base, Form):
                     self.approximator.process_submatrix)
                 self.DIL_Tscanner.boundaryReached.disconnect(
                     self.correlator.process_submatrix)
+                self.DIL_Tscanner.boundaryReached.disconnect(
+                    self.maximizer.process_submatrix)
                 self.approximator.reset()
             
     def mouseDoubleClickEvent(self, event):
@@ -371,6 +379,8 @@ class MainWindow(Base, Form):
             self.approximator.process_submatrix)
         self.scanner.boundaryReached.connect(
             self.correlator.process_submatrix)
+        self.scanner.boundaryReached.connect(
+            self.maximizer.process_submatrix)
     
     def _cont_DILT(self):
         print "started"
@@ -390,6 +400,8 @@ class MainWindow(Base, Form):
             self.approximator.process_submatrix)
         self.DIL_Tscanner.boundaryReached.connect(
             self.correlator.process_submatrix)
+        self.DIL_Tscanner.boundaryReached.connect(
+            self.maximizer.process_submatrix)
         
         
     def connectCorrectorWidget(self):
