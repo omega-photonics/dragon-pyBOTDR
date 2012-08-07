@@ -23,12 +23,12 @@ def minimize(args):
     halfwidth = np.sum(f < f.max() / 2) / 2
     try: 
         return brent(fmin, brack=(appr - halfwidth, appr, appr + halfwidth))
-    except AssertionError:
+    except ValueError:
         return -123.4
 
 def aprlorentz(sp_index):
     data = dataFromShared()
-    f = data[sp_index][1820:3140]
+    f = data[sp_index][1820:3640]
     return approximate(f, 1e-5)
     
     
@@ -87,7 +87,7 @@ class Correlator(QtCore.QThread):
         self.lastres = None
         self.dt = 1
         self.probes = None
-        self.proberange = (1850, 1950)
+        self.proberange = (3200, 3201)
     
     def set_probe_range(self, range):
         self.proberange = range 
@@ -220,13 +220,12 @@ class Approximator(QtCore.QThread):
         self.pool = mp.Pool(3)
     
     def run(self):
-        print "Approximmator run called"
         scanData = dataFromShared()
         #np.save("data_{}".format(self.num), f[1000:2000])
         n = shared.shape[-2]        
         TASKS = [self.dataIndex + (j,) for j in range(2)]
         res = self.pool.map(aprlorentz, TASKS, chunksize=len(TASKS) // 3 + 1)
-        param, stat = zip(*res)
+        param, stat = [np.array(x) for x in zip(*res)]
 
 #        print "Approximated {} dots".format(res.shape)
 #        print "Res for {} dots: {}".format(res[0,:0].shape, res[0,:0])
@@ -238,7 +237,8 @@ class Approximator(QtCore.QThread):
 #            bottom, top = self.scanning_interval
 #            self.measured.emit(2 * top - 2 * bottom + dist)
         
-        self.lastres = res
+        self.lastres = param
+        self.measured.emit(param)
       
 class Maximizer(QtCore.QThread):
     measured = QtCore.pyqtSignal(np.ndarray)
@@ -265,29 +265,20 @@ if __name__ == "__main__":
     f = np.loadtxt("/home/gleb/code/C/fit_spectra/sp.dat")
     pos = np.unravel_index(np.argmax(f), f.shape)
     print pos, f.shape
-    index = 123
-    f = f[index:index + 1] 
+    findex = 123
+    gindex = 13
+    shift = 13
+    g = np.roll(f[gindex], shift)
+    f = f[findex] 
     print f.shape
-    fit = np.poly1d(np.polyfit(np.arange(len(f[0])), f[0], 12))
-    shift = 35
-    g = np.roll(f, shift, 1)
     df = np.diff(f)
     dg = np.diff(g)
-    dt = 1
     
-    pool = mp.Pool(3)
-
-    TASKS = [ (dt, f, g, df, dg, i) for i in range(1)]
-    
-    #res = []
-    #f_min = lambda tau: -correlate(tau, dt, f, g, df, dg, i)
-    #for i in range(1000):
-        #res.append(brent(f_min))
-    
-    fmin = lambda tau: -correlate(tau, dt, f, g, df, dg, i) 
-    appr = -f[i].argmax() + g[i].argmax()
+    fmin = lambda tau: -correlate(tau, f, g, df, dg) 
+    halfwidth = np.sum(f < f.max() / 2) / 2
+    appr = -f.argmax() + g.argmax()
     t = time.time()
-    res = brent(fmin, brack=(appr-1,appr+1))
+    res = brent(fmin, brack=(appr-halfwidth,appr,appr+halfwidth))
     t2 = time.time()
     print t2 - t
     res2 = leastsq(fmin, x0=[appr], disp=0)
@@ -295,15 +286,16 @@ if __name__ == "__main__":
 #    res = pool.map(minimize, TASKS, chunksize=340)
     
     print res, res2
-    plt.plot(f[0], label='f')
-    plt.plot(fit(np.arange(len(f[0]))))
+#    fit = np.poly1d(np.polyfit(np.arange(len(f[0])), f[0], 12))
+    plt.plot(f, label='f')
+    plt.plot(g, label='g')
+    plt.plot(np.roll(g, int(-res)), label='res')
+    plt.legend()
     plt.show()
-#    plt.plot(g[0], label='g')
-#    plt.plot(np.roll(g, int(-res), 1)[0], label='res')
-#    plt.legend()
-#    plt.show()
 #    plt.plot(t_corr, corr)
 #    plt.plot(res[chan], 1, "+")
+#    plt.show()
+#    plt.plot(fit(np.arange(len(f[0]))))
 #    plt.show()
 #    
 #    plt.plot(res/dt, "-")
