@@ -182,6 +182,31 @@ class MainWindow(Base, Form):
         self.showMaximized()
         self.plotsOnly = False
         self.plotsFreezed = False
+    
+    def on_new_reflectogramm(self, pcie_dev_response):
+        data = pcie_dev_response.data
+        data = data[:pcie_dev_response.framelength]
+        self.dragonplot.myplot(data)
+        if self.isScanning:
+            self.collector.appendDragonResponse(pcie_dev_response)
+            submatrix_to_process = None
+            if self.is_scanning_cont:
+                newstate = self.DIL_Tscanner.scan()
+                if newstate == self.DIL_Tscanner.top:
+                    self.usbWorker.start_down_scan()
+                elif newstate == self.DIL_Tscanner.bottom:
+                    self.usbWorker.start_up_scan()
+                if newstate in [self.DIL_Tscanner.top, self.DIL_Tscanner.bottom]:
+                    submatrix_to_process = self.DIL_Tscaner.lastsubmatrix
+            if self.is_scanning_pulsed:
+                newstate = self.scanner.scan()
+                if newstate in [self.scanner.top, self.scanner.bottom]:
+                    submatrix_to_process = self.scanner.lastsubmatrix
+            if submatrix_to_process is not None:
+                 self.approximator.process_submatrix(submatrix_to_process)
+                 self.correlator.process_submatrix(submatrix_to_process)
+                 self.maximizer.process_submarix(submatrix_to_process)
+                
 
     def change_scan_time(self):
         framelength = self.pcieWidget.framelength.value()
