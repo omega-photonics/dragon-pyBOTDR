@@ -121,8 +121,7 @@ class MainWindow(Base, Form):
         self.pcieClient = pcie.PCIENetWorker()
         self.pcieClient.setPCIESettings(self.pcieWidget.value())
         
-        self.pcieClient.measured.connect(self.precollector.appendDragonResponse)
-        self.precollector.reflectogrammChanged.connect(self.dragonplot.myplot)
+        self.pcieClient.measured.connect(self.on_new_reflectogramm)
         self.collector.setReflectogrammLength(self.pcieWidget.framelength.value())
         
         
@@ -132,7 +131,12 @@ class MainWindow(Base, Form):
 
         self.enablePulseScanner(True)
         self.scannerSelect.pulse.toggled.connect(self.enablePulseScanner)        
-        
+        if self.scannerSelect.pulse.isChecked():
+            self.maximizer.set_bottom(self.scannerWidget.bottom.value())
+            self.maximizer.set_dt(self.scannerWidget.dt())
+        else:
+            self.maximizer.set_bottom(self.DILTScannerWidget.bottom.value())
+            self.maximizer.set_dt(self.DILTScannerWidget.dt())
 
         self.pcieWidget.valueChanged.connect(self.pcieClient.setPCIESettings)
 
@@ -175,9 +179,6 @@ class MainWindow(Base, Form):
         self.change_scan_time()
         self.usbWorker.setDIL_T_scan_top(self.DILTScannerWidget.top.value())
         self.usbWorker.setDIL_T_scan_bottom(self.DILTScannerWidget.bottom.value())
-        self.scanner.dtChanged.connect(self.maximizer.set_dt)
-        self.scanner.bottomChanged.connect(self.maximizer.set_bottom)
-        self.scanner.updaterange()
 
         self.showMaximized()
         self.plotsOnly = False
@@ -187,6 +188,12 @@ class MainWindow(Base, Form):
         self.DIL_Tscanner.scanPositionChanged.connect(self.DILTScannerWidget.position.setNum)
         self.scannerWidget.nsteps.valueChanged.connect(self.collector.setSpectraLength)
         self.scanner.scanPositionChanged.connect(self.scannerWidget.position.setNum)
+        self.scannerWidget.dtChanged.connect(self.maximizer.set_dt)
+        self.scannerWidget.bottom.valueChanged.connect(
+            self.maximizer.set_bottom)
+        self.DILTScannerWidget.dtChanged.connect(self.maximizer.set_dt)
+        self.DILTScannerWidget.bottom.valueChanged.connect(
+            self.maximizer.set_bottom)
     
     def on_new_reflectogramm(self, pcie_dev_response):
         data = pcie_dev_response.data
@@ -238,9 +245,7 @@ class MainWindow(Base, Form):
             print "scanning with pulse"
             if self.isScanning:
                 self.start_DILT_scan(False)
-
             self.collector.setSpectraLength(self.scanner.ndot)
-            
         else:
             print "scanning with cont"
             self.collector.setSpectraLength(self.DIL_Tscanner.ndot)
@@ -274,15 +279,7 @@ class MainWindow(Base, Form):
                 self.conttimer.timeout.disconnect(self._cont)
             else:
                 self.isScanning = False
-                self.collector.reflectogrammChanged.disconnect(self.scanner.scan)
-                self.pcieClient.measured.disconnect(self.collector.appendDragonResponse)
                 self.approximator.reset()
-                self.scanner.boundaryReached.disconnect(
-                    self.approximator.process_submatrix)
-                self.scanner.boundaryReached.disconnect(
-                    self.correlator.process_submatrix)
-                self.scanner.boundaryReached.disconnect(
-                    self.maximizer.process_submatrix)
 
     def start_DILT_scan(self, val):
         if val:
@@ -300,16 +297,6 @@ class MainWindow(Base, Form):
                 self.conttimer.timeout.disconnect(self._cont_DILT)
             else:
                 self.isScanning = False
-                self.collector.reflectogrammChanged.disconnect(self.DIL_Tscanner.scan)
-                self.pcieClient.measured.disconnect(self.collector.appendDragonResponse)
-                self.DIL_Tscanner.topReached.disconnect(self.usbWorker.start_down_scan)
-                self.DIL_Tscanner.bottomReached.disconnect(self.usbWorker.start_up_scan)
-                self.DIL_Tscanner.boundaryReached.disconnect(
-                    self.approximator.process_submatrix)
-                self.DIL_Tscanner.boundaryReached.disconnect(
-                    self.correlator.process_submatrix)
-                self.DIL_Tscanner.boundaryReached.disconnect(
-                    self.maximizer.process_submatrix)
                 self.approximator.reset()
             
     def mouseDoubleClickEvent(self, event):
@@ -357,39 +344,17 @@ class MainWindow(Base, Form):
         print "cleared"
         self.scanner.reset()
         print "reset"
-        
-        self.pcieClient.measured.connect(self.collector.appendDragonResponse)
+        self.collector.setNextIndex(self.scanner.pos)
         #self.precollector.averaged.connect(self.collector.appendDragonResponse)
-        
-        self.scanner.scan()
-        self.collector.reflectogrammChanged.connect(self.scanner.scan)
-        self.scanner.boundaryReached.connect(
-            self.approximator.process_submatrix)
-        self.scanner.boundaryReached.connect(
-            self.correlator.process_submatrix)
-        self.scanner.boundaryReached.connect(
-            self.maximizer.process_submatrix)
     
     def _cont_DILT(self):
         print "started"
         self.isScanning = True
         self.collector.clear()
         self.DIL_Tscanner.reset()
-        
-        self.pcieClient.measured.connect(self.collector.appendDragonResponse)
+        self.collector.setNextIndex(self.DIL_Tscanner.pos)
         #self.precollector.averaged.connect(self.collector.appendDragonResponse)
-        
-        self.DIL_Tscanner.scan()
         self.usbWorker.start_up_scan()
-        self.collector.reflectogrammChanged.connect(self.DIL_Tscanner.scan)
-        self.DIL_Tscanner.topReached.connect(self.usbWorker.start_down_scan)
-        self.DIL_Tscanner.bottomReached.connect(self.usbWorker.start_up_scan)
-        self.DIL_Tscanner.boundaryReached.connect(
-            self.approximator.process_submatrix)
-        self.DIL_Tscanner.boundaryReached.connect(
-            self.correlator.process_submatrix)
-        self.DIL_Tscanner.boundaryReached.connect(
-            self.maximizer.process_submatrix)
         
         
     def connectCorrectorWidget(self):
@@ -556,6 +521,7 @@ class DragonWidget(DragomBase, DragonForm):
             
 ScannerBase, ScannerForm = uic.loadUiType("timescanner.ui")
 class ScannerWidget(ScannerBase, ScannerForm):
+    dtChanged = QtCore.pyqtSignal(float)
     def __init__(self, parent=None, name="timescaner"):
         super(ScannerBase, self).__init__(parent)
         self.setupUi(self)
@@ -578,9 +544,15 @@ class ScannerWidget(ScannerBase, ScannerForm):
             widget.valueChanged.connect(self.savestate)
         for widget in [self.__dict__[x] for x in self.checkable]:
             widget.stateChanged.connect(self.savestate)
-            
-            
+        
+        dt_emitter = lambda x: self.dtChanged.emit(self.dt())
+        for widget in [self.top, self.bottom, self.nsteps]:
+            widget.valueChanged.connect(dt_emitter)
     
+    def dt(self):
+        return (float(self.top.value() - self.bottom.value()) /
+              (self.nsteps.value() + 1))
+
     def setstate(self, state):
         for key in self.valueable:
             self.__dict__[key].setValue(state[key])

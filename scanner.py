@@ -59,11 +59,6 @@ class TimeScanner(QtCore.QObject):
         return pos
     
     def inc(self):
-        if self.state is None:
-            self.state = 0
-            self.pos = self.stateToPos(self.state)
-            return
-            
         self.state = self.state + 1 
         if self.state == self.statesNumber:
             self.state = self.ndot * 2 * 2 
@@ -107,3 +102,5 @@ class TimeScanner(QtCore.QObject):
     def reset(self):
         self.state = None
         self.pos = None
+        self.state = 0
+        self.pos = self.stateToPos(0)
