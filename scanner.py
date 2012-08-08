@@ -6,14 +6,6 @@ Position = namedtuple("Position", "direction scannumber polarization freqindex")
 
 class TimeScanner(QtCore.QObject):
     scanPositionChanged = QtCore.pyqtSignal(int)
-    changeTemperature = QtCore.pyqtSignal(int)
-    nextIndexChanged = QtCore.pyqtSignal(tuple)
-    topReached = QtCore.pyqtSignal(int)
-    bottomReached = QtCore.pyqtSignal(int)
-    boundaryReached = QtCore.pyqtSignal(tuple)
-    measured = QtCore.pyqtSignal(int)
-    dtChanged = QtCore.pyqtSignal(float)
-    bottomChanged = QtCore.pyqtSignal(int)
     UP, DOWN = 0, 1
     def __init__(self, n=100, parent=None):
         QtCore.QObject.__init__(self, parent)
@@ -84,29 +76,33 @@ class TimeScanner(QtCore.QObject):
             self.debugprint = False
             print "debug print! pos:", self.pos
             
-        self.nextIndexChanged.emit(pos)
-        targetT = self.temperatureList[pos.freqindex]
-        self.changeTemperature.emit(targetT)
+        self.targetT = self.temperatureList[pos.freqindex]
+
         if pos.direction == TimeScanner.UP:
+            self.scan_position = targetT
             self.scanPositionChanged.emit(targetT)
         else:
+            self.scan_position = 2 * self.top - targetT
             self.scanPositionChanged.emit(2 * self.top - targetT)
+        self.bottom_reached = False
+        self.top_reached = False
+        self.boundary_reached = False
         if pos.freqindex == 0 and \
-            pos.direction == TimeScanner.DOWN and \
-            pos.polarization == 1:
+           pos.direction == TimeScanner.DOWN and \
+           pos.polarization == 1:
             print "bottom reached! pos:", self.pos
             self.debugprint = True
-            self.bottomReached.emit(pos.scannumber)
-            self.boundaryReached.emit((pos.direction, pos.scannumber))
-
+            self.bottom_reached = True
+            self.lastsubmatrix = (pos.direction, pos.scannumber)
+            self.boundary_reached = True
         if pos.freqindex == self.ndot - 1 and \
-            pos.polarization == 1 and \
-            pos.direction == TimeScanner.UP :
+           pos.polarization == 1 and \
+           pos.direction == TimeScanner.UP :
             print "top reached! pos:", self.pos
             self.debugprint = True
-            self.topReached.emit(pos.scannumber)
-            self.boundaryReached.emit((pos.direction, pos.scannumber))
-            
+            self.top_reached = True
+            self.lastsubmatrix = (pos.direction, pos.scannumber)
+            self.boundary_reached = True
         
     def reset(self):
         self.state = None

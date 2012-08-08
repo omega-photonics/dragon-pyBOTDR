@@ -191,16 +191,25 @@ class MainWindow(Base, Form):
             self.collector.appendDragonResponse(pcie_dev_response)
             submatrix_to_process = None
             if self.is_scanning_cont:
-                newstate = self.DIL_Tscanner.scan()
-                if newstate == self.DIL_Tscanner.top:
+                self.collector.appendOnChipTemperature(
+                    self.DIL_Tscanner.scan_position)
+                self.DIL_Tscanner.scan()
+                self.collector.setNextIndex(self.DIL_Tscanner.pos)
+                if self.DIL_Tscanner.top_reached:
                     self.usbWorker.start_down_scan()
-                elif newstate == self.DIL_Tscanner.bottom:
+                elif self.DIL_Tscanner.bottom_reached:
                     self.usbWorker.start_up_scan()
-                if newstate in [self.DIL_Tscanner.top, self.DIL_Tscanner.bottom]:
+                if (self.DIL_Tscanner.top_reached or
+                    self.DIL_Tscanner.bottom_reached)
                     submatrix_to_process = self.DIL_Tscaner.lastsubmatrix
             if self.is_scanning_pulsed:
-                newstate = self.scanner.scan()
-                if newstate in [self.scanner.top, self.scanner.bottom]:
+                self.collector.appendOnChipTemperature(
+                    self.scanner.scan_position)
+                self.scanner.scan()
+                self.collector.setNextIndex(self.scanner.pos)
+                self.usbWorker.setPFGI_TscanAmp(self.scanner.targetT)
+                if (self.scanner.top_reached or
+                    self.scanner.bottom_reached)
                     submatrix_to_process = self.scanner.lastsubmatrix
             if submatrix_to_process is not None:
                  self.approximator.process_submatrix(submatrix_to_process)
@@ -223,14 +232,6 @@ class MainWindow(Base, Form):
         if val:
             print "scanning with pulse"
             try:
-                self.collector.reflectogrammChanged.disconnect(self.DIL_Tscanner.measure)
-            except TypeError:
-                pass
-            try:
-                self.DIL_Tscanner.measured.disconnect(self.collector.appendOnChipTemperature)
-            except TypeError:
-                pass
-            try:
                 self.DILTScannerWidget.nsteps.valueChanged.disconnect(self.collector.setSpectraLength)
             except TypeError:
                 pass
@@ -238,47 +239,25 @@ class MainWindow(Base, Form):
                 self.DIL_Tscanner.scanPositionChanged.disconnect(self.DILTScannerWidget.position.setNum)
             except TypeError:
                 pass
-            try:
-                self.DIL_Tscanner.nextIndexChanged.connect(self.collector.setNextIndex)
-            except TypeError:
-                pass
             if self.isScanning:
                 self.start_DILT_scan(False)
 
-            self.collector.reflectogrammChanged.connect(self.scanner.measure)
-            self.scanner.measured.connect(self.collector.appendOnChipTemperature)
             self.scannerWidget.nsteps.valueChanged.connect(self.collector.setSpectraLength)
             self.collector.setSpectraLength(self.scanner.ndot)
             self.scanner.scanPositionChanged.connect(self.scannerWidget.position.setNum)
-            self.scanner.nextIndexChanged.connect(self.collector.setNextIndex)
             
         else:
             print "scanning with cont"
-            self.collector.reflectogrammChanged.connect(self.DIL_Tscanner.measure)
-            self.DIL_Tscanner.measured.connect(self.collector.appendOnChipTemperature)
             self.DILTScannerWidget.nsteps.valueChanged.connect(self.collector.setSpectraLength)
             self.collector.setSpectraLength(self.DIL_Tscanner.ndot)
             self.DIL_Tscanner.scanPositionChanged.connect(self.DILTScannerWidget.position.setNum)
-            self.DIL_Tscanner.nextIndexChanged.connect(self.collector.setNextIndex)
 
-            try:
-                self.collector.reflectogrammChanged.disconnect(self.scanner.measure)
-            except TypeError:
-                pass
-            try:
-                self.scanner.measured.disconnect(self.collector.appendOnChipTemperature)            
-            except TypeError:
-                pass
             try:
                 self.scannerWidget.nsteps.valueChanged.disconnect(self.collector.setSpectraLength)
             except TypeError:
                 pass     
             try:
                 self.scanner.scanPositionChanged.disconnect(self.scannerWidget.position.setNum)
-            except TypeError:
-                pass
-            try:
-                self.scanner.nextIndexChanged.connect(self.collector.setNextIndex)
             except TypeError:
                 pass
             if self.isScanning:
