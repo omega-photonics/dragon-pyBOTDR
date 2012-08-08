@@ -182,6 +182,11 @@ class MainWindow(Base, Form):
         self.showMaximized()
         self.plotsOnly = False
         self.plotsFreezed = False
+        
+        self.DILTScannerWidget.nsteps.valueChanged.connect(self.collector.setSpectraLength)
+        self.DIL_Tscanner.scanPositionChanged.connect(self.DILTScannerWidget.position.setNum)
+        self.scannerWidget.nsteps.valueChanged.connect(self.collector.setSpectraLength)
+        self.scanner.scanPositionChanged.connect(self.scannerWidget.position.setNum)
     
     def on_new_reflectogramm(self, pcie_dev_response):
         data = pcie_dev_response.data
@@ -231,35 +236,14 @@ class MainWindow(Base, Form):
         self.scannerWidget.setEnabled(val)
         if val:
             print "scanning with pulse"
-            try:
-                self.DILTScannerWidget.nsteps.valueChanged.disconnect(self.collector.setSpectraLength)
-            except TypeError:
-                pass
-            try:
-                self.DIL_Tscanner.scanPositionChanged.disconnect(self.DILTScannerWidget.position.setNum)
-            except TypeError:
-                pass
             if self.isScanning:
                 self.start_DILT_scan(False)
 
-            self.scannerWidget.nsteps.valueChanged.connect(self.collector.setSpectraLength)
             self.collector.setSpectraLength(self.scanner.ndot)
-            self.scanner.scanPositionChanged.connect(self.scannerWidget.position.setNum)
             
         else:
             print "scanning with cont"
-            self.DILTScannerWidget.nsteps.valueChanged.connect(self.collector.setSpectraLength)
             self.collector.setSpectraLength(self.DIL_Tscanner.ndot)
-            self.DIL_Tscanner.scanPositionChanged.connect(self.DILTScannerWidget.position.setNum)
-
-            try:
-                self.scannerWidget.nsteps.valueChanged.disconnect(self.collector.setSpectraLength)
-            except TypeError:
-                pass     
-            try:
-                self.scanner.scanPositionChanged.disconnect(self.scannerWidget.position.setNum)
-            except TypeError:
-                pass
             if self.isScanning:
                 self.startaccuratetimescan(False)
 
