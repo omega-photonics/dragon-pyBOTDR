@@ -63,42 +63,40 @@ class TimeScanner(QtCore.QObject):
         self.pos = self.stateToPos(self.state)
     
     def scan(self):
+        prev = self.pos
         self.inc()
         pos = self.pos
-        if self.debugprint:
-            self.debugprint = False
-            print "debug print! pos:", self.pos
-            
         self.targetT = self.temperatureList[pos.freqindex]
 
         if pos.direction == TimeScanner.UP:
-            self.scan_position = targetT
-            self.scanPositionChanged.emit(targetT)
+            self.scan_position = self.targetT
+            self.scanPositionChanged.emit(self.targetT)
         else:
-            self.scan_position = 2 * self.top - targetT
-            self.scanPositionChanged.emit(2 * self.top - targetT)
+            self.scan_position = 2 * self.top - self.targetT
+            self.scanPositionChanged.emit(2 * self.top - self.targetT)
         self.bottom_reached = False
         self.top_reached = False
         self.boundary_reached = False
-        if pos.freqindex == 0 and \
-           pos.direction == TimeScanner.DOWN and \
-           pos.polarization == 1:
-            print "bottom reached! pos:", self.pos
-            self.debugprint = True
+        if (pos.freqindex == 0 and
+            pos.direction == TimeScanner.UP and
+            pos.polarization == 0 and
+            not self.firstscan):
+#            print "bottom reached! pos:", self.pos
             self.bottom_reached = True
-            self.lastsubmatrix = (pos.direction, pos.scannumber)
+            self.lastsubmatrix = (prev.direction, prev.scannumber)
             self.boundary_reached = True
         if pos.freqindex == self.ndot - 1 and \
-           pos.polarization == 1 and \
-           pos.direction == TimeScanner.UP :
-            print "top reached! pos:", self.pos
-            self.debugprint = True
+           pos.polarization == 0 and \
+           pos.direction == TimeScanner.DOWN:
+#            print "top reached! pos:", self.pos
             self.top_reached = True
-            self.lastsubmatrix = (pos.direction, pos.scannumber)
+            self.lastsubmatrix = (prev.direction, prev.scannumber)
             self.boundary_reached = True
-        
+            self.firstscan = False
+
     def reset(self):
-        self.state = None
-        self.pos = None
         self.state = 0
         self.pos = self.stateToPos(0)
+        self.firstscan = True
+        self.targetT = self.temperatureList[self.pos.freqindex]
+        self.scan_position = self.targetT

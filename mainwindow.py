@@ -71,7 +71,6 @@ class MainWindow(Base, Form):
         
         
         self.scanner = scanner.TimeScanner(n=self.scannerWidget.nsteps.value())
-        self.scanner.changeTemperature.connect(self.usbWorker.setPFGI_TscanAmp)        
         self.DIL_Tscanner = scanner.TimeScanner(n=self.DILTScannerWidget.nsteps.value())
         #self.DIL_Tscanner.changeTemperature.connect(self.usbWorker.setDIL_T)
         
@@ -128,7 +127,8 @@ class MainWindow(Base, Form):
         self.pcieClient.start()
         #self.pcieClient.measured.connect(lambda x: self.dragonplot.myplot(x.data))
         self.isScanning = False
-
+        self.is_scanning_cont = False
+        self.is_scanning_pulsed = False
         self.enablePulseScanner(True)
         self.scannerSelect.pulse.toggled.connect(self.enablePulseScanner)        
         if self.scannerSelect.pulse.isChecked():
@@ -212,8 +212,8 @@ class MainWindow(Base, Form):
                 elif self.DIL_Tscanner.bottom_reached:
                     self.usbWorker.start_up_scan()
                 if (self.DIL_Tscanner.top_reached or
-                    self.DIL_Tscanner.bottom_reached)
-                    submatrix_to_process = self.DIL_Tscaner.lastsubmatrix
+                    self.DIL_Tscanner.bottom_reached):
+                    submatrix_to_process = self.DIL_Tscanner.lastsubmatrix
             if self.is_scanning_pulsed:
                 self.collector.appendOnChipTemperature(
                     self.scanner.scan_position)
@@ -221,12 +221,12 @@ class MainWindow(Base, Form):
                 self.collector.setNextIndex(self.scanner.pos)
                 self.usbWorker.setPFGI_TscanAmp(self.scanner.targetT)
                 if (self.scanner.top_reached or
-                    self.scanner.bottom_reached)
+                    self.scanner.bottom_reached):
                     submatrix_to_process = self.scanner.lastsubmatrix
             if submatrix_to_process is not None:
-                 self.approximator.process_submatrix(submatrix_to_process)
-                 self.correlator.process_submatrix(submatrix_to_process)
-                 self.maximizer.process_submarix(submatrix_to_process)
+                self.approximator.process_submatrix(submatrix_to_process)
+                self.correlator.process_submatrix(submatrix_to_process)
+                self.maximizer.process_submatrix(submatrix_to_process)
                 
 
     def change_scan_time(self):
@@ -279,6 +279,7 @@ class MainWindow(Base, Form):
                 self.conttimer.timeout.disconnect(self._cont)
             else:
                 self.isScanning = False
+                self.is_scanning_pulsed = False
                 self.approximator.reset()
 
     def start_DILT_scan(self, val):
@@ -297,6 +298,7 @@ class MainWindow(Base, Form):
                 self.conttimer.timeout.disconnect(self._cont_DILT)
             else:
                 self.isScanning = False
+                self.is_scanning_cont = False
                 self.approximator.reset()
             
     def mouseDoubleClickEvent(self, event):
@@ -340,6 +342,7 @@ class MainWindow(Base, Form):
     def _cont(self):
         print "started"
         self.isScanning = True
+        self.is_scanning_pulsed = True
         self.collector.clear()
         print "cleared"
         self.scanner.reset()
@@ -350,6 +353,7 @@ class MainWindow(Base, Form):
     def _cont_DILT(self):
         print "started"
         self.isScanning = True
+        self.is_scanning_cont = True
         self.collector.clear()
         self.DIL_Tscanner.reset()
         self.collector.setNextIndex(self.DIL_Tscanner.pos)
