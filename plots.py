@@ -9,7 +9,8 @@ SIGNAL_BOT = -1
 #Curve = namedtuple("Curve", "x y")
 
 class Plot(Qwt.QwtPlot):
-    colors = [Qt.Qt.black, Qt.Qt.red, Qt.Qt.darkBlue, Qt.Qt.darkRed]
+    colors = [Qt.Qt.black, Qt.Qt.red, Qt.Qt.darkBlue, Qt.Qt.darkRed,
+              Qt.Qt.darkGray, Qt.Qt.darkRed, Qt.Qt.darkGreen]
     def __init__(self, rect, parent=None, zeroed=False, levels=[0], points=False, ncurves=1):
         Qwt.QwtPlot.__init__(self, parent)
         self.setAxisScale(Qwt.QwtPlot.yLeft, SIGNAL_BOT, SIGNAL_TOP)

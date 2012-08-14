@@ -34,8 +34,8 @@ def main(*files):
     plt.show()
 
 def calc_argmax(data):
-    N = 20 
     T = data.shape[-1]
+    N = T // 5
     t0 = time()
     C, D, DD = dcheb(T, N)
     K = fblas.dgemm(alpha=1., b=data.T, a=C.T).T

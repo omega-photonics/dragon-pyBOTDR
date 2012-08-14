@@ -6,18 +6,31 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>187</width>
-    <height>111</height>
+    <width>193</width>
+    <height>186</height>
    </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
   </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="3" column="0" colspan="2">
+   <item row="4" column="0" colspan="2">
     <widget class="QPushButton" name="saveView">
      <property name="text">
       <string>Save View</string>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="0" colspan="2">
+    <widget class="QPushButton" name="flashSTM">
+     <property name="text">
+      <string>Flash to STM</string>
      </property>
     </widget>
    </item>
@@ -31,6 +44,13 @@
      </property>
     </widget>
    </item>
+   <item row="5" column="0" colspan="2">
+    <widget class="QPushButton" name="saveData">
+     <property name="text">
+      <string>Save last scan</string>
+     </property>
+    </widget>
+   </item>
    <item row="0" column="0">
     <widget class="QLabel" name="label">
      <property name="text">
@@ -38,17 +58,23 @@
      </property>
     </widget>
    </item>
-   <item row="4" column="0" colspan="2">
-    <widget class="QPushButton" name="saveData">
+   <item row="1" column="0">
+    <widget class="QLabel" name="label_2">
      <property name="text">
-      <string>Save last scan</string>
+      <string>Results shift</string>
      </property>
     </widget>
    </item>
-   <item row="5" column="0" colspan="2">
-    <widget class="QPushButton" name="flashSTM">
-     <property name="text">
-      <string>Flash to STM</string>
+   <item row="1" column="1">
+    <widget class="QDoubleSpinBox" name="shift">
+     <property name="minimum">
+      <double>-500.000000000000000</double>
+     </property>
+     <property name="maximum">
+      <double>500.000000000000000</double>
+     </property>
+     <property name="value">
+      <double>50.000000000000000</double>
      </property>
     </widget>
    </item>

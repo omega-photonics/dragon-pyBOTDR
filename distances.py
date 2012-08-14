@@ -260,6 +260,8 @@ class Chebyshev(QtCore.QThread):
     submatrix_processed = QtCore.pyqtSignal(np.ndarray)
     def __init__(self, parent=None):
         QtCore.QThread.__init__(self, parent)
+        self.dist = None
+        self.level = 50.
     
     def process_submatrix(self, index):
         self.dataindex = index
@@ -280,16 +282,22 @@ class Chebyshev(QtCore.QThread):
         if self.dataindex == (0, 0):
             self.firstres = res
         else:
-            dist = -self.firstres + res 
-            dist[2] -= 30
-            dist += 50
-            self.measured.emit(dist)
+            self.dist = -self.firstres + res 
+            self.dist[2] -= 30
+            self.dist += self.level
+            self.measured.emit(self.dist)
 
     def set_dt(self, dt):
         self.dt = dt
 
     def set_bottom(self, bot):
         self.bottom = bot
+    
+    def set_level(self, level):
+        if self.dist is not None:
+            self.dist += (level - self.level)
+            self.measured.emit(self.dist)
+        self.level = level
 
     
 if __name__ == "__main__":

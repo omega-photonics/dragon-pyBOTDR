@@ -35,12 +35,12 @@ class MainWindow(Base, Form):
         
         
         self.settings.addWidget(self.pcieWidget, 0, 0, 1, 1)
-        self.settings.addWidget(self.usbWidget, 0, 1, 5, 1)
+        self.settings.addWidget(self.usbWidget, 0, 1, 2, 1)
         self.scannerSelect.layout().insertWidget(1, self.scannerWidget)
         self.scannerSelect.layout().insertWidget(3, self.DILTScannerWidget)
         self.settings.addWidget(self.scannerSelect, 1, 0, 1, 1)
-        self.settings.addWidget(self.correctorWidget, 3, 0, 1, 1)
-        self.settings.addWidget(self.otherWidget, 4, 0, 1, 1)
+        self.settings.addWidget(self.correctorWidget, 2, 1, 1, 1)
+        self.settings.addWidget(self.otherWidget, 2, 0, 1, 1)
         
         dragonrect = QtCore.QRectF(0, plots.SIGNAL_BOT, 8*6144,
                                    plots.SIGNAL_TOP - plots.SIGNAL_BOT)
@@ -406,7 +406,8 @@ class MainWindow(Base, Form):
         self.otherWidget.saveData.clicked.connect(self.collector.savelastscan)
         self.otherWidget.saveView.clicked.connect(self.saveView)
         self.otherWidget.flashSTM.clicked.connect(self.usbWorker.flash)
-        
+        self.otherWidget.shift.valueChanged.connect(
+            self.chebyshev.set_level)
     def connectUSBSettingsWithInterface(self):
         widget = self.usbWidget
         widget.spinBox.valueChanged.connect(self.usbWorker.setPFGI_amplitude)
