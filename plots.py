@@ -27,8 +27,12 @@ class Plot(Qwt.QwtPlot):
                 curve.setPen(QtGui.QPen())
             else:
                 curve.setStyle(Qwt.QwtPlotCurve.NoCurve)
-                curve.setSymbol(Qwt.QwtSymbol(Qwt.QwtSymbol.Ellipse, Plot.colors[i],
-                    QtGui.QPen(Plot.colors[i]), Qt.QSize(3,3)))
+                shape = Qwt.QwtSymbol.Ellipse
+                color = Plot.colors[i % len(Plot.colors)]
+                size = Qt.QSize(3,3)
+                symbol = Qwt.QwtSymbol(shape, color,
+                                       QtGui.QPen(color), Qt.QSize(3,3))
+                curve.setSymbol(symbol)
             self.curves.append(curve)
         self.zoom = Qwt.QwtPlotZoomer(Qwt.QwtPlot.xBottom,
                                 Qwt.QwtPlot.yLeft,            
@@ -40,7 +44,7 @@ class Plot(Qwt.QwtPlot):
         if type(data) is np.ndarray and data.ndim == 2:
             _x = np.arange(data.shape[1])
             for i in range(data.shape[0]):
-                self.curves[n + i].setData(_x, data[i]) # -1 is ugly HACK
+                self.curves[n + i].setData(_x, data[i]) 
         else:
             if type(data) is Curve:
                 _x = data.x

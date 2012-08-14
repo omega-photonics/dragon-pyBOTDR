@@ -9,10 +9,11 @@ import time
 import scanner
 from datetime import datetime
 import dump
-from distances import Correlator, Approximator, Maximizer, MemoryUpdater
+from distances import (Correlator, Approximator, Maximizer, MemoryUpdater,
+                       Chebyshev)
 from averager import Averager
 from distancecorrector import DistanceCorrector
-
+from sender import Sender 
 STARTING_N_SP_DOT = 100
 
 Base, Form = uic.loadUiType("window.ui")
@@ -46,7 +47,7 @@ class MainWindow(Base, Form):
         self.dragonplot = plots.Plot(dragonrect, self)
         self.temperatureplot = plots.TempPlot()
         self.spectraplot = plots.SlicePlot(self)
-        self.distanceplot = plots.Plot(QtCore.QRectF(0, -500, 8*6144, 2*500), self, zeroed=True, points=True, levels=[0,0,1000,1000], ncurves=4)
+        self.distanceplot = plots.Plot(QtCore.QRectF(0, -500, 8*6144, 2*500), self, zeroed=True, points=True, levels=[0,0,1000,1000], ncurves=8)
         #for widget in [self.dragonplot, self.temperatureplot, self.spectraplot, self.distanceplot]:
         #    widget.setSizePolicy(QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Minimum)
         
@@ -68,7 +69,7 @@ class MainWindow(Base, Form):
 #        self.correlator.measured.connect(self.corraverager.appendDistances)
         self.appraverager = Averager(self)
 #        self.approximator.measured.connect(self.appraverager.appendDistances)
-        
+        self.chebyshev = Chebyshev(self)
         
         self.scanner = scanner.TimeScanner(n=self.scannerWidget.nsteps.value())
         self.DIL_Tscanner = scanner.TimeScanner(n=self.DILTScannerWidget.nsteps.value())
@@ -163,7 +164,9 @@ class MainWindow(Base, Form):
         self.scannerWidget.averageNumber.valueChanged.connect(self.appraverager.setNumber)
         
         self.distanceplot.d2 = lambda t: self.distanceplot.myplot(t, n=3)
+        self.distanceplot.d3 = lambda t: self.distanceplot.myplot(t, n=4)
         self.corraverager.measured.connect(self.distanceplot.d2)
+        self.chebyshev.measured.connect(self.distanceplot.d3)
         #self.appraverager.measured.connect(lambda t: self.distanceplot.myplot(t, n=3))
 
         
@@ -194,6 +197,20 @@ class MainWindow(Base, Form):
         self.DILTScannerWidget.dtChanged.connect(self.maximizer.set_dt)
         self.DILTScannerWidget.bottom.valueChanged.connect(
             self.maximizer.set_bottom)
+
+#        self.context = zmq.Context()
+#        self.send_socket = self.context.socket(zmq.PUB)
+#        self.send_socket.bind('tcp://*:5556')
+#        self.correlator.submatrix_processed.connect(
+#            lambda res: self.publish_res(res, 'corr'))
+#        self.chebyshev.submatrix_processed.connect(
+#            lambda res: self.publish_res(res, 'cheb'))
+        self.sender = Sender()
+        self.correlator.submatrix_processed.connect(
+            lambda res: self.sender.send_data(res, 0))
+        self.chebyshev.submatrix_processed.connect(
+            lambda res: self.sender.send_data(res, 1))
+    
     
     def on_new_reflectogramm(self, pcie_dev_response):
         data = pcie_dev_response.data
@@ -227,7 +244,8 @@ class MainWindow(Base, Form):
                 self.approximator.process_submatrix(submatrix_to_process)
                 self.correlator.process_submatrix(submatrix_to_process)
                 self.maximizer.process_submatrix(submatrix_to_process)
-                
+                self.chebyshev.process_submatrix(submatrix_to_process) 
+    
 
     def change_scan_time(self):
         framelength = self.pcieWidget.framelength.value()
@@ -456,6 +474,9 @@ class MainWindow(Base, Form):
     def start_FOL2_oscilation(self):
         self.killTimer(self.FOL2timer)
         self.FOL2timer = self.startTimer(self.usbWidget.FOL2_period.value())
+    
+    def closeEvent(self, event):
+        self.sender.stop()
 
 BaseUSB, FormUSB = uic.loadUiType("botdrmainwindow.ui")
 class USBWidget(BaseUSB, FormUSB):

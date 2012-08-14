@@ -5,6 +5,7 @@ from cython_corr_extra import correlate
 import numpy as np
 from scipy.optimize import brent, curve_fit, fmin_cg as leastsq
 from fit import approximate
+import chebyshev
 
 import shared # its an empty module for IPC
 
@@ -79,7 +80,7 @@ class MemoryUpdater(QtCore.QObject):
     
 class Correlator(QtCore.QThread):
     measured = QtCore.pyqtSignal(np.ndarray)
-
+    submatrix_processed = QtCore.pyqtSignal(np.ndarray)
     def __init__(self, parent=None):
         QtCore.QThread.__init__(self, parent)
         self.num = 0
@@ -163,14 +164,12 @@ class Correlator(QtCore.QThread):
                       for i in range(n_sp)]
             chunksize = len(TASKS) // 3 + 1
             res.append(self.pool.map(minimize, TASKS, chunksize=chunksize))
-        res = np.array(res)
-        print res
-        print self.num  
-#        self.measured.emit(res)
+        preres = -np.array(res) # HACK to correspond other methods
+        self.submatrix_processed.emit(preres)
         f = scanData[self.dataIndex]
         c = np.amax(f, axis=-1) - np.amin(f, axis=-1)
-        av = (res * c).sum(axis=0) / c.sum(axis=0)
-        res = np.append(res, [av], axis=0)
+        av = (preres * c).sum(axis=0) / c.sum(axis=0)
+        res = np.append(preres, [av], axis=0)
 #            np.append(dist, [av])
 
         if self.num == 0:
@@ -256,7 +255,43 @@ class Maximizer(QtCore.QThread):
     def set_bottom(self, bot):
         self.bottom = bot
 
+class Chebyshev(QtCore.QThread):
+    measured = QtCore.pyqtSignal(np.ndarray)
+    submatrix_processed = QtCore.pyqtSignal(np.ndarray)
+    def __init__(self, parent=None):
+        QtCore.QThread.__init__(self, parent)
+    
+    def process_submatrix(self, index):
+        self.dataindex = index
+        self.start()
 
+    def run(self):
+        index = self.dataindex
+        scan = dataFromShared()[index]
+        preres = np.array([chebyshev.calc_argmax(pol) for pol in scan])
+        
+        f = scan
+        c = np.amax(f, axis=-1) - np.amin(f, axis=-1)
+        av = (preres * c).sum(axis=0) / c.sum(axis=0)
+        res = np.append(preres, [av], axis=0)
+#            np.append(dist, [av])
+
+        self.submatrix_processed.emit(preres)
+        if self.dataindex == (0, 0):
+            self.firstres = res
+        else:
+            dist = -self.firstres + res 
+            dist[2] -= 30
+            dist += 50
+            self.measured.emit(dist)
+
+    def set_dt(self, dt):
+        self.dt = dt
+
+    def set_bottom(self, bot):
+        self.bottom = bot
+
+    
 if __name__ == "__main__":
     import pylab as plt
     import time
