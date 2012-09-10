@@ -74,13 +74,14 @@ class Collector(QtCore.QObject):
         self.temperature2 = np.zeros(30000)
         self.nextIndex = (0, 0, 0, 0)
         self.collected = set([])
+        self.inversion = 1
         
     def appendDragonResponse(self, response):
         response.data[:response.framelength] -= np.average(response.data[response.framelength-1000:response.framelength])
         #response.data[:4] = 0
         direction, scanNumber, polarisation, freqindex = self.nextIndex
         self.scanMatrix[direction, scanNumber, polarisation, :, freqindex] = \
-            response.data[:response.framelength]
+            self.inversion * response.data[:response.framelength]
         self.reflectogrammChanged.emit(response.data[:response.framelength]) #?
         self.collected.add(scanNumber)
         #self.waitingForTemperature = True
@@ -211,3 +212,9 @@ class Collector(QtCore.QObject):
             
     def setNextIndex(self, index):
         self.nextIndex = index
+
+    def setInversion(self, inv):
+        if inv:
+            self.inversion = -1
+        else:
+            self.inversion = 1

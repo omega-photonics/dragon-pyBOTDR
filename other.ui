@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>193</width>
-    <height>186</height>
+    <width>211</width>
+    <height>233</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -20,52 +20,7 @@
    <string>Form</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="4" column="0" colspan="2">
-    <widget class="QPushButton" name="saveView">
-     <property name="text">
-      <string>Save View</string>
-     </property>
-    </widget>
-   </item>
-   <item row="6" column="0" colspan="2">
-    <widget class="QPushButton" name="flashSTM">
-     <property name="text">
-      <string>Flash to STM</string>
-     </property>
-    </widget>
-   </item>
-   <item row="0" column="1">
-    <widget class="QSpinBox" name="plotChannel">
-     <property name="maximum">
-      <number>100000</number>
-     </property>
-     <property name="value">
-      <number>1000</number>
-     </property>
-    </widget>
-   </item>
-   <item row="5" column="0" colspan="2">
-    <widget class="QPushButton" name="saveData">
-     <property name="text">
-      <string>Save last scan</string>
-     </property>
-    </widget>
-   </item>
-   <item row="0" column="0">
-    <widget class="QLabel" name="label">
-     <property name="text">
-      <string>Plot channel</string>
-     </property>
-    </widget>
-   </item>
-   <item row="1" column="0">
-    <widget class="QLabel" name="label_2">
-     <property name="text">
-      <string>Results shift</string>
-     </property>
-    </widget>
-   </item>
-   <item row="1" column="1">
+   <item row="3" column="2">
     <widget class="QDoubleSpinBox" name="shift">
      <property name="minimum">
       <double>-500.000000000000000</double>
@@ -75,6 +30,65 @@
      </property>
      <property name="value">
       <double>50.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="0">
+    <widget class="QLabel" name="label">
+     <property name="text">
+      <string>Plot channel</string>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="0">
+    <widget class="QLabel" name="label_2">
+     <property name="text">
+      <string>Results shift</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="2">
+    <widget class="QSpinBox" name="plotChannel">
+     <property name="maximum">
+      <number>100000</number>
+     </property>
+     <property name="value">
+      <number>1000</number>
+     </property>
+    </widget>
+   </item>
+   <item row="7" column="0" colspan="3">
+    <widget class="QPushButton" name="saveData">
+     <property name="text">
+      <string>Save last scan</string>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="0" colspan="3">
+    <widget class="QPushButton" name="saveView">
+     <property name="text">
+      <string>Save View</string>
+     </property>
+    </widget>
+   </item>
+   <item row="8" column="0" colspan="3">
+    <widget class="QPushButton" name="flashSTM">
+     <property name="text">
+      <string>Flash to STM</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="0">
+    <widget class="QLabel" name="label_3">
+     <property name="text">
+      <string>Inverse</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="2">
+    <widget class="QCheckBox" name="inverse">
+     <property name="text">
+      <string/>
      </property>
     </widget>
    </item>

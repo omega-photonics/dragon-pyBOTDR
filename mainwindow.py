@@ -408,6 +408,9 @@ class MainWindow(Base, Form):
         self.otherWidget.flashSTM.clicked.connect(self.usbWorker.flash)
         self.otherWidget.shift.valueChanged.connect(
             self.chebyshev.set_level)
+        self.otherWidget.inverse.toggled.connect(
+            self.collector.setInversion)
+
     def connectUSBSettingsWithInterface(self):
         widget = self.usbWidget
         widget.spinBox.valueChanged.connect(self.usbWorker.setPFGI_amplitude)

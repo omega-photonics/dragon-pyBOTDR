@@ -4,7 +4,7 @@ import numpy as np
 from collector import Curve
 
 SIGNAL_TOP = 256
-SIGNAL_BOT = -1
+SIGNAL_BOT = -256
 
 #Curve = namedtuple("Curve", "x y")
 
