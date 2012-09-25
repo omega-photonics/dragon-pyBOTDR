@@ -4,7 +4,7 @@ from ctypes import *
 fs = "ch1amp ch1shift ch1count ch2amp ch2shift ch2count framelength framecount"
 class PCIESettings(object):
     
-    MaxFrameLenght = 49140 * sizeof(c_uint32)
+    MaxFrameLenght = 65520 * sizeof(c_uint32)
     def __init__(self,
                  ch1amp, ch1shift, ch1count,
                  ch2amp, ch2shift, ch2count, 

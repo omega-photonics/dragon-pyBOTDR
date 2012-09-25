@@ -59,7 +59,7 @@ class MainWindow(Base, Form):
         self.usbWorker = USBWorker()  
         
         self.precollector = Precollector(self)
-        self.collector = Collector(49140, self.scannerWidget.nsteps.value())
+        self.collector = Collector(65520, self.scannerWidget.nsteps.value())
         self.memoryupdater = MemoryUpdater(self)
         self.correlator = Correlator(self)
         self.approximator = Approximator(self)
@@ -146,7 +146,7 @@ class MainWindow(Base, Form):
         self.collector.spectraOnChipChanged.connect(self.spectraplot.setData)
         #self.collector.spectraChanged.connect(mypeakdetection)
         
-        
+        # This connections must be replaced with clear code
         self.collector.sharedArrayChanged.connect(self.memoryupdater.updateShared)
         self.memoryupdater.updated.connect(self.correlator.update)
         self.memoryupdater.updated.connect(self.approximator.update)
