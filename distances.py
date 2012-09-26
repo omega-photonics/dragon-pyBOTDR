@@ -1,11 +1,11 @@
 import multiprocessing as mp
 import ctypes
 from PyQt4 import QtCore 
-from cython_corr_extra import correlate
+import pycorrmax
 import numpy as np
-from scipy.optimize import brent, curve_fit, fmin_cg as leastsq
-from fit import approximate
-import chebyshev
+#from scipy.optimize import brent, curve_fit, fmin_cg as leastsq
+#from fit import approximate
+#import chebyshev
 
 import shared # its an empty module for IPC
 
@@ -84,12 +84,12 @@ class Correlator(QtCore.QThread):
     def __init__(self, parent=None):
         QtCore.QThread.__init__(self, parent)
         self.num = 0
-        self.pool = mp.Pool(3)
         self.lastres = None
         self.dt = 1
         self.probes = None
         self.proberange = (3200, 3201)
-    
+        self.argmax = pycorrmax.Argmax()    
+
     def set_probe_range(self, range):
         self.proberange = range 
     
@@ -139,10 +139,8 @@ class Correlator(QtCore.QThread):
         
         # now we need to restart calculator processes for them to be able to 
         # access shared arrays
-        self.pool.close()
-        self.pool.join()
-        self.pool = mp.Pool(3)
-    
+        pass
+
     def run(self):
         print "Correlator run called"
         scanData = dataFromShared()

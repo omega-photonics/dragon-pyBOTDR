@@ -241,10 +241,10 @@ class MainWindow(Base, Form):
                     self.scanner.bottom_reached):
                     submatrix_to_process = self.scanner.lastsubmatrix
             if submatrix_to_process is not None:
-                self.approximator.process_submatrix(submatrix_to_process)
+#                self.approximator.process_submatrix(submatrix_to_process)
                 self.correlator.process_submatrix(submatrix_to_process)
                 self.maximizer.process_submatrix(submatrix_to_process)
-                self.chebyshev.process_submatrix(submatrix_to_process) 
+#                self.chebyshev.process_submatrix(submatrix_to_process) 
     
 
     def change_scan_time(self):
