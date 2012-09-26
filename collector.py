@@ -11,46 +11,6 @@ from pciedevsettings import PCIEResponse
 
 Curve = namedtuple("Curve", "x y")
 
-class Precollector(QtCore.QObject):
-    measured = QtCore.pyqtSignal(PCIEResponse)
-    averaged = QtCore.pyqtSignal(PCIEResponse)
-    reflectogrammChanged = QtCore.pyqtSignal(np.ndarray)
-    def __init__(self, parent=None):
-        QtCore.QObject.__init__(self,parent)
-        self.state = 0
-        self.response = PCIEResponse()
-    
-    def check_response(self, response):
-        return True
-        if response.activechannel != 0:
-            return False
-         
-        dat = response.data[:response.framelength]
-        dif = np.diff(dat[4:])
-        minimum, maximum = dat[:2]
-        here_min = min(dat[4:])
-        here_max = max(dat[4:])
-        average = dat[3]
-        
-        
-        K = np.max(np.abs(dif)) / np.median(np.abs(dif))
-        if K > 1000:
-            print "Step detected", K
-            return False
-        if minimum != here_min or maximum != here_max or abs(dat[2] - 527) > 1e-5 or abs(average - np.average(dat[4:])) / average > 1e-5:
-            print "Send fail detected"
-            print minimum - here_min, maximum - here_max, dat[2] - 527, abs(average - np.average(dat[4:])) / average
-            return False
-        
-        #response.data[:response.framelength] -= np.average(response.data[response.framelength-1000:response.framelength])
-        response.data[:4] = 0
-        return True
-        
-    def appendDragonResponse(self, response):
-        self.reflectogrammChanged.emit(response.data[:response.framelength])
-        
-        
-
 class Collector(QtCore.QObject):
     reflectogrammChanged = QtCore.pyqtSignal(np.ndarray)
     temperatureCurveChanged = QtCore.pyqtSignal(Curve)
@@ -112,7 +72,7 @@ class Collector(QtCore.QObject):
         self.onChipTemp[self.nextIndex] = temp
         upcurves = []
         downcurves = []
-        for j in range(2):
+        for j in range(1):
             for i in range(3):
                 upcurves.append(
                 Curve(x=self.upOnChipTemp[i, j],
@@ -178,9 +138,9 @@ class Collector(QtCore.QObject):
     def recreatecontainer(self):
         # 2 -- up and down scans
         # 3 -- three of down and up scans
-        # 2 -- 2 polarisation state
+        # 1 -- 1 polarisation state
         # 
-        shape = (2, 3, 2, self.reflectogrammLength, self.spectraLength)
+        shape = (2, 3, 1, self.reflectogrammLength, self.spectraLength)
         N = np.prod(shape)
         print "newshape", shape
         self.shared = mp.Array(ctypes.c_double, N, lock=False)
@@ -195,7 +155,7 @@ class Collector(QtCore.QObject):
         self.upScanMatrix[:] = 123
         self.downScanMatrix[:] = 123
         
-        self.onChipTemp = np.zeros((2, 3, 2, self.spectraLength), dtype=int)
+        self.onChipTemp = np.zeros((2, 3, 1, self.spectraLength), dtype=int)
         self.upOnChipTemp = self.onChipTemp[0]
         self.downOnChipTemp = self.onChipTemp[1]
         self.nextIndex = (0, 0, 0, 0)

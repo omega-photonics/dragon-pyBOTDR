@@ -11,7 +11,8 @@ SIGNAL_BOT = -256
 class Plot(Qwt.QwtPlot):
     colors = [Qt.Qt.black, Qt.Qt.red, Qt.Qt.darkBlue, Qt.Qt.darkRed,
               Qt.Qt.darkGray, Qt.Qt.darkRed, Qt.Qt.darkGreen]
-    def __init__(self, rect, parent=None, zeroed=False, levels=[0], points=False, ncurves=1):
+    def __init__(self, rect, parent=None, zeroed=False, levels=[0],
+                 points=False, lines=False,  ncurves=1):
         Qwt.QwtPlot.__init__(self, parent)
         self.setAxisScale(Qwt.QwtPlot.yLeft, SIGNAL_BOT, SIGNAL_TOP)
 
@@ -24,16 +25,17 @@ class Plot(Qwt.QwtPlot):
         for i in range(ncurves):
             curve = Qwt.QwtPlotCurve()
             curve.attach(self)
-            if not points:
+            if lines or (not points and not lines):
                 curve.setPen(QtGui.QPen())
-            else:
-                curve.setStyle(Qwt.QwtPlotCurve.NoCurve)
+            if points:
                 shape = Qwt.QwtSymbol.Ellipse
                 color = Plot.colors[i % len(Plot.colors)]
                 size = Qt.QSize(3,3)
                 symbol = Qwt.QwtSymbol(shape, color,
                                        QtGui.QPen(color), Qt.QSize(3,3))
                 curve.setSymbol(symbol)
+                if not lines:
+                    curve.setStyle(Qwt.QwtPlotCurve.NoCurve)
             self.curves.append(curve)
         self.zoom = Qwt.QwtPlotZoomer(Qwt.QwtPlot.xBottom,
                                 Qwt.QwtPlot.yLeft,            

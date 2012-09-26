@@ -35,7 +35,7 @@ class TimeScanner(QtCore.QObject):
         self.temperatureList = np.append(self.range, self.range[::-1])
         # for each scan we have 2 directions,
         # for each dirrection we have 2 polarization states
-        self.statesNumber = self.nscans * self.ndot * 2 * 2 
+        self.statesNumber = self.nscans * self.ndot * 2 * 1 
         self.reset()
         
     def measure(self):
@@ -46,7 +46,7 @@ class TimeScanner(QtCore.QObject):
             self.measured.emit(2 * self.top - targetT)
     
     def stateToPos(self, state):
-        rest, polarization = divmod(state, 2)
+        rest, polarization = state, 0
         rest, tempindex = divmod(rest, self.ndot)
         rest, direction = divmod(rest, 2)
         rest, scannumber = divmod(rest, self.nscans)

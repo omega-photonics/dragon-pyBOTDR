@@ -1,5 +1,5 @@
 from PyQt4 import Qt, QtCore, QtGui, uic, Qwt5 as Qwt
-from collector import Collector, Precollector
+from collector import Collector
 import pcienetclient as pcie
 import  pciedevsettings
 import plots
@@ -9,8 +9,7 @@ import time
 import scanner
 from datetime import datetime
 import dump
-from distances import (Correlator, Approximator, Maximizer, MemoryUpdater,
-                       Chebyshev)
+from distances import (Correlator, Maximizer, MemoryUpdater)
 from averager import Averager
 from distancecorrector import DistanceCorrector
 from sender import Sender 
@@ -47,10 +46,10 @@ class MainWindow(Base, Form):
         self.dragonplot = plots.Plot(dragonrect, self)
         self.temperatureplot = plots.TempPlot()
         self.spectraplot = plots.SlicePlot(self)
-        self.distanceplot = plots.Plot(QtCore.QRectF(0, -500, 8*6144, 2*500), self, zeroed=True, points=True, levels=[0,0,1000,1000], ncurves=8)
-        #for widget in [self.dragonplot, self.temperatureplot, self.spectraplot, self.distanceplot]:
-        #    widget.setSizePolicy(QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Minimum)
-        
+        self.distanceplot = plots.Plot(QtCore.QRectF(0, -500, 8*6144, 2*500),
+                                       self, zeroed=True, points=True,
+                                       lines=True, levels=[0,0,1000,1000],
+                                       ncurves=8)
         self.plots.addWidget(self.spectraplot, 0, 0, 1, 1)
         self.plots.addWidget(self.temperatureplot, 0, 1)
         self.plots.addWidget(self.dragonplot, 1, 1)
@@ -58,18 +57,15 @@ class MainWindow(Base, Form):
 
         self.usbWorker = USBWorker()  
         
-        self.precollector = Precollector(self)
         self.collector = Collector(65520, self.scannerWidget.nsteps.value())
         self.memoryupdater = MemoryUpdater(self)
         self.correlator = Correlator(self)
-        self.approximator = Approximator(self)
         self.maximizer = Maximizer(self)
         
         self.corraverager = Averager(self)
 #        self.correlator.measured.connect(self.corraverager.appendDistances)
         self.appraverager = Averager(self)
 #        self.approximator.measured.connect(self.appraverager.appendDistances)
-        self.chebyshev = Chebyshev(self)
         
         self.scanner = scanner.TimeScanner(n=self.scannerWidget.nsteps.value())
         self.DIL_Tscanner = scanner.TimeScanner(n=self.DILTScannerWidget.nsteps.value())
@@ -149,7 +145,6 @@ class MainWindow(Base, Form):
         # This connections must be replaced with clear code
         self.collector.sharedArrayChanged.connect(self.memoryupdater.updateShared)
         self.memoryupdater.updated.connect(self.correlator.update)
-        self.memoryupdater.updated.connect(self.approximator.update)
         #self.scanner.dtChanged.connect(self.correlator.setDt)
         #self.scanner.dtChanged.connect(self.approximator.setDt)
         
@@ -166,7 +161,6 @@ class MainWindow(Base, Form):
         self.distanceplot.d2 = lambda t: self.distanceplot.myplot(t, n=3)
         self.distanceplot.d3 = lambda t: self.distanceplot.myplot(t, n=4)
         self.corraverager.measured.connect(self.distanceplot.d2)
-        self.chebyshev.measured.connect(self.distanceplot.d3)
         #self.appraverager.measured.connect(lambda t: self.distanceplot.myplot(t, n=3))
 
         
@@ -198,18 +192,9 @@ class MainWindow(Base, Form):
         self.DILTScannerWidget.bottom.valueChanged.connect(
             self.maximizer.set_bottom)
 
-#        self.context = zmq.Context()
-#        self.send_socket = self.context.socket(zmq.PUB)
-#        self.send_socket.bind('tcp://*:5556')
-#        self.correlator.submatrix_processed.connect(
-#            lambda res: self.publish_res(res, 'corr'))
-#        self.chebyshev.submatrix_processed.connect(
-#            lambda res: self.publish_res(res, 'cheb'))
         self.sender = Sender()
         self.correlator.submatrix_processed.connect(
             lambda res: self.sender.send_data(res, 0))
-        self.chebyshev.submatrix_processed.connect(
-            lambda res: self.sender.send_data(res, 1))
     
     
     def on_new_reflectogramm(self, pcie_dev_response):
@@ -298,7 +283,6 @@ class MainWindow(Base, Form):
             else:
                 self.isScanning = False
                 self.is_scanning_pulsed = False
-                self.approximator.reset()
 
     def start_DILT_scan(self, val):
         if val:
@@ -317,7 +301,6 @@ class MainWindow(Base, Form):
             else:
                 self.isScanning = False
                 self.is_scanning_cont = False
-                self.approximator.reset()
             
     def mouseDoubleClickEvent(self, event):
         widgets = [self.usbWidget, self.pcieWidget, self.scannerSelect,
@@ -366,7 +349,6 @@ class MainWindow(Base, Form):
         self.scanner.reset()
         print "reset"
         self.collector.setNextIndex(self.scanner.pos)
-        #self.precollector.averaged.connect(self.collector.appendDragonResponse)
     
     def _cont_DILT(self):
         print "started"
@@ -375,7 +357,6 @@ class MainWindow(Base, Form):
         self.collector.clear()
         self.DIL_Tscanner.reset()
         self.collector.setNextIndex(self.DIL_Tscanner.pos)
-        #self.precollector.averaged.connect(self.collector.appendDragonResponse)
         self.usbWorker.start_up_scan()
         
         
@@ -406,8 +387,6 @@ class MainWindow(Base, Form):
         self.otherWidget.saveData.clicked.connect(self.collector.savelastscan)
         self.otherWidget.saveView.clicked.connect(self.saveView)
         self.otherWidget.flashSTM.clicked.connect(self.usbWorker.flash)
-        self.otherWidget.shift.valueChanged.connect(
-            self.chebyshev.set_level)
         self.otherWidget.inverse.toggled.connect(
             self.collector.setInversion)
 
